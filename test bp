@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doubt Solver AI - Test Version</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 650px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 8px;
+            font-size: 2.2em;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 0.95em;
+            margin-bottom: 5px;
+        }
+
+        .badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+
+        .api-section {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+        }
+
+        .api-section label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+
+        .api-section input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+            font-family: monospace;
+        }
+
+        .api-section input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .api-section small {
+            display: block;
+            margin-top: 8px;
+            color: #666;
+            font-size: 0.85em;
+            line-height: 1.5;
+        }
+
+        .api-section small a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .api-section small a:hover {
+            text-decoration: underline;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .mic-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 22px;
+            border-radius: 12px;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-weight: 600;
+        }
+
+        .mic-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .mic-button:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .mic-button.listening {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        .mic-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .status {
+            text-align: center;
+            padding: 16px;
+            background: #f5f5f5;
+            border-radius: 10px;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.95em;
+        }
+
+        .status.listening {
+            background: #fff3cd;
+            color: #856404;
+            border: 2px solid #ffc107;
+        }
+
+        .status.processing {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 2px solid #17a2b8;
+        }
+
+        .status.speaking {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #28a745;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #dc3545;
+        }
+
+        .transcript-box {
+            margin-top: 20px;
+            padding: 18px;
+            background: #f9f9f9;
+            border-left: 4px solid #667eea;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .transcript-box.show {
+            display: block;
+        }
+
+        .transcript-box h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 0.95em;
+            font-weight: 600;
+        }
+
+        .transcript-box p {
+            color: #333;
+            line-height: 1.6;
+            font-size: 0.95em;
+        }
+
+        .answer-box {
+            margin-top: 20px;
+            padding: 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 10px;
+            display: none;
+        }
+
+        .answer-box.show {
+            display: block;
+        }
+
+        .answer-box h3 {
+            color: #764ba2;
+            margin-bottom: 12px;
+            font-size: 1.05em;
+            font-weight: 600;
+        }
+
+        .answer-box p {
+            color: #333;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            font-size: 0.95em;
+        }
+
+        .controls-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .stop-button {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            flex: 1;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        .stop-button:hover {
+            background: #c82333;
+            transform: translateY(-1px);
+        }
+
+        .info-box {
+            margin-top: 25px;
+            padding: 18px;
+            background: #e7f3ff;
+            border-radius: 10px;
+            font-size: 0.88em;
+            color: #004085;
+            border: 1px solid #b8daff;
+        }
+
+        .info-box strong {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 1.05em;
+        }
+
+        .info-box ul {
+            margin-left: 20px;
+        }
+
+        .info-box li {
+            margin-bottom: 6px;
+            line-height: 1.5;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .warning-box {
+            margin-top: 20px;
+            padding: 15px;
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            font-size: 0.85em;
+            color: #856404;
+        }
+
+        .warning-box strong {
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 25px;
+            }
+            
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .mic-button {
+                font-size: 1.1em;
+                padding: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎤 Doubt Solver AI</h1>
+            <p class="subtitle">Class 6-10 | All Subjects</p>
+            <span class="badge">Voice Enabled 🔊 | Test Version</span>
+        </div>
+
+        <div class="api-section">
+            <label for="apiKey">🔑 Gemini API Key:</label>
+            <input 
+                type="password" 
+                id="apiKey" 
+                placeholder="Apni Gemini API key yahan paste karo"
+            >
+            <small>
+                💡 API key kahan se milegi? 
+                <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a> 
+                pe jao aur "Create API Key" dabao. Key automatically save ho jayegi.
+            </small>
+        </div>
+
+        <div class="controls">
+            <button class="mic-button" id="micButton">
+                🎤 Click karke apna doubt bolo
+            </button>
+            <div class="controls-row" id="controlsRow" style="display: none;">
+                <button class="stop-button" id="stopSpeaking">🔇 Stop Speaking</button>
+            </div>
+        </div>
+
+        <div class="status" id="status">
+            Pehle API key dalo, fir mic button dabao
+        </div>
+
+        <div class="transcript-box" id="transcriptBox">
+            <h3>📝 Tumne kya pucha:</h3>
+            <p id="transcript"></p>
+        </div>
+
+        <div class="answer-box" id="answerBox">
+            <h3>✅ Answer:</h3>
+            <p id="answer"></p>
+        </div>
+
+        <div class="info-box">
+            <strong>💡 Kaise use kare:</strong>
+            <ul>
+                <li><strong>Step 1:</strong> Upar Gemini API key paste karo (sirf pehli baar)</li>
+                <li><strong>Step 2:</strong> Mic button click karo</li>
+                <li><strong>Step 3:</strong> Apna doubt clearly bolo (Hindi/English/Hinglish)</li>
+                <li><strong>Step 4:</strong> AI turant answer dega (text + voice mein)</li>
+            </ul>
+        </div>
+
+        <div class="warning-box">
+            <strong>⚠️ Test Version Warning:</strong>
+            Ye test version hai. API key browser mein save hoti hai (secure nahi hai production ke liye). 
+            Real product ke liye backend use karna padega.
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let recognition;
+        let synthesis = window.speechSynthesis;
+        let isListening = false;
+        let currentUtterance = null;
+
+        // Elements
+        const micButton = document.getElementById('micButton');
+        const statusDiv = document.getElementById('status');
+        const transcriptBox = document.getElementById('transcriptBox');
+        const transcriptText = document.getElementById('transcript');
+        const answerBox = document.getElementById('answerBox');
+        const answerText = document.getElementById('answer');
+        const apiKeyInput = document.getElementById('apiKey');
+        const stopSpeakingButton = document.getElementById('stopSpeaking');
+        const controlsRow = document.getElementById('controlsRow');
+
+        // Load API key from localStorage
+        const savedApiKey = localStorage.getItem('geminiApiKey');
+        if (savedApiKey) {
+            apiKeyInput.value = savedApiKey;
+            updateStatus('', 'API key loaded! Mic button dabao aur bolo.');
+        }
+
+        // Save API key to localStorage on change
+        apiKeyInput.addEventListener('input', () => {
+            const key = apiKeyInput.value.trim();
+            if (key) {
+                localStorage.setItem('geminiApiKey', key);
+                updateStatus('', 'API key saved! Ab mic button dabao.');
+            }
+        });
+
+        // Check if browser supports Speech Recognition
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.lang = 'hi-IN'; // Hindi + English mix support
+
+            recognition.onstart = () => {
+                isListening = true;
+                micButton.classList.add('listening');
+                micButton.textContent = '🎤 Bol raha hoon... (sun raha hoon)';
+                updateStatus('listening', '🎤 Listening... apna doubt bolo!');
+            };
+
+            recognition.onresult = async (event) => {
+                const transcript = event.results[0][0].transcript;
+                transcriptText.textContent = transcript;
+                transcriptBox.classList.add('show');
+                
+                updateStatus('processing', '🤔 Answer dhundh raha hoon...');
+                
+                // Send to Gemini API
+                await getAnswerFromGemini(transcript);
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Speech recognition error:', event.error);
+                
+                let errorMsg = '❌ Error: ';
+                if (event.error === 'no-speech') {
+                    errorMsg += 'Kuch suna nahi. Dubara try karo.';
+                } else if (event.error === 'audio-capture') {
+                    errorMsg += 'Mic kaam nahi kar raha. Check karo.';
+                } else if (event.error === 'not-allowed') {
+                    errorMsg += 'Mic permission nahi mili. Browser settings check karo.';
+                } else {
+                    errorMsg += event.error;
+                }
+                
+                updateStatus('error', errorMsg);
+                resetMicButton();
+            };
+
+            recognition.onend = () => {
+                resetMicButton();
+            };
+        } else {
+            updateStatus('error', '❌ Sorry, tumhara browser speech recognition support nahi karta');
+            micButton.disabled = true;
+        }
+
+        // Mic button click handler
+        micButton.addEventListener('click', () => {
+            const apiKey = apiKeyInput.value.trim();
+            
+            if (!apiKey) {
+                alert('⚠️ Pehle Gemini API key enter karo upar!');
+                apiKeyInput.focus();
+                return;
+            }
+
+            if (!isListening) {
+                // Stop any ongoing speech
+                synthesis.cancel();
+                answerBox.classList.remove('show');
+                transcriptBox.classList.remove('show');
+                controlsRow.style.display = 'none';
+                
+                // Start listening
+                recognition.start();
+            } else {
+                recognition.stop();
+            }
+        });
+
+        // Stop speaking button
+        stopSpeakingButton.addEventListener('click', () => {
+            synthesis.cancel();
+            controlsRow.style.display = 'none';
+            updateStatus('', 'Mic button dabao aur apna doubt bolo');
+        });
+
+        function resetMicButton() {
+            isListening = false;
+            micButton.classList.remove('listening');
+            micButton.textContent = '🎤 Click karke apna doubt bolo';
+        }
+
+        function updateStatus(type, message) {
+            statusDiv.className = 'status ' + type;
+            if (type === 'processing') {
+                statusDiv.innerHTML = '<div class="spinner"></div>' + message;
+            } else {
+                statusDiv.textContent = message;
+            }
+        }
+
+        async function getAnswerFromGemini(question) {
+            const apiKey = apiKeyInput.value.trim();
+            
+            try {
+                // Using Gemini 2.0 Flash model
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{
+                                text: `Tu ek helpful teacher hai jo Class 6 se 10 tak ke students ke doubts solve karta hai. 
+
+Student ka sawal: ${question}
+
+Instructions:
+- Agar sawal kisi specific subject (Math, Science, SST, English, Hindi) se related hai toh uska clear aur step-by-step answer de
+- Simple Hindi-English mix mein explain kar (jaise students samajhte hain)
+- Examples de jahan zarurat ho
+- Agar koi formula ya concept hai toh clearly explain kar
+- Answer concise rakho but complete (max 200 words)
+- Agar numerical problem hai toh step-by-step solution de
+
+Answer:`
+                            }]
+                        }],
+                        generationConfig: {
+                            temperature: 0.7,
+                            maxOutputTokens: 500,
+                        }
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error?.message || `API Error: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+                    const answer = data.candidates[0].content.parts[0].text;
+                    displayAnswer(answer);
+                    speakAnswer(answer);
+                } else {
+                    throw new Error('Invalid response from Gemini API');
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                let errorMsg = '❌ ';
+                
+                if (error.message.includes('API_KEY_INVALID')) {
+                    errorMsg += 'API key galat hai. Check karo aur sahi key dalo.';
+                } else if (error.message.includes('RATE_LIMIT')) {
+                    errorMsg += 'API limit exceed ho gayi. Thodi der baad try karo.';
+                } else if (error.message.includes('Failed to fetch')) {
+                    errorMsg += 'Internet connection check karo.';
+                } else {
+                    errorMsg += error.message || 'Kuch gadbad ho gayi. Dubara try karo.';
+                }
+                
+                updateStatus('error', errorMsg);
+                answerBox.classList.remove('show');
+            }
+        }
+
+        function displayAnswer(answer) {
+            answerText.textContent = answer;
+            answerBox.classList.add('show');
+            updateStatus('speaking', '🔊 Answer sun raha hoon...');
+        }
+
+        function speakAnswer(text) {
+            // Cancel any ongoing speech
+            synthesis.cancel();
+
+            // Clean text for better speech
+            const cleanText = text.replace(/[*_#`]/g, '');
+
+            currentUtterance = new SpeechSynthesisUtterance(cleanText);
+            
+            // Try to use best voice available
+            const voices = synthesis.getVoices();
+            const hindiVoice = voices.find(voice => voice.lang === 'hi-IN') || 
+                             voices.find(voice => voice.lang.startsWith('en'));
+            
+            if (hindiVoice) {
+                currentUtterance.voice = hindiVoice;
+            }
+            
+            currentUtterance.rate = 0.9;
+            currentUtterance.pitch = 1;
+            currentUtterance.volume = 1;
+
+            currentUtterance.onstart = () => {
+                controlsRow.style.display = 'flex';
+            };
+
+            currentUtterance.onend = () => {
+                updateStatus('', 'Mic button dabao aur apna doubt bolo');
+                controlsRow.style.display = 'none';
+            };
+
+            currentUtterance.onerror = (event) => {
+                console.error('Speech synthesis error:', event);
+                controlsRow.style.display = 'none';
+                updateStatus('error', '❌ Voice output mein error. Text padh lo answer.');
+            };
+
+            synthesis.speak(currentUtterance);
+        }
+
+        // Load voices when available
+        if (synthesis.onvoiceschanged !== undefined) {
+            synthesis.onvoiceschanged = () => {
+                synthesis.getVoices();
+            };
+        }
+    </script>
+</body>
+</html>
